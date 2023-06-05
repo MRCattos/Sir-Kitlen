@@ -6,4 +6,4 @@ This is most of my code for my discord bot. If you want too make this work on yo
 
 
 ## Commands list
-Soon!
+Soon !
