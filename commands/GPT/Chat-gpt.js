@@ -25,7 +25,7 @@ module.exports = {
 
         } catch (error) {
             console.error(error);
-            interaction.reply('Correct error handling has not been written yet. Check the terminal for the error.');
+            interaction.reply('Correct error handling has not been implemented for this command yet. Check the output terminal for the details.');
         }
     }
 };
