@@ -1,4 +1,4 @@
-const { SlashCommandBuilder } = require('discord.js');
+const { SlashCommandBuilder, EmbedBuilder } = require('discord.js');
 const { Configuration, OpenAIApi } = require('openai');
 require('dotenv').config();
 
@@ -10,31 +10,42 @@ const openai = new OpenAIApi(configuration);
 module.exports = {
   data: new SlashCommandBuilder()
     .setName('gpt')
-    .setDescription('Ask ChatGPT a question')
+    .setDescription('Ask/say whatever you want to ChatGPT')
+    .setDMPermission(false)
     .addStringOption((option) =>
-      option
-        .setName('prompt')
-        .setDescription('Your question')
-        .setRequired(true)
+      option.setName('prompt').setDescription('Your input').setRequired(true)
     ),
   async execute(interaction) {
+    const Prompt = interaction.options.getString('prompt');
+    if (!Prompt) {
+      throw new Error('No prompt provided.');
+    }
+
     try {
-      const prompt = interaction.options.getString('prompt');
-      if (!prompt) {
-        throw new Error('No prompt provided.');
-      }
+      await interaction.deferReply();
 
       const response = await openai.createCompletion({
-        model: 'gpt-3.5-turbo',
-        prompt: prompt,
+        model: 'text-davinci-003',
+        max_tokens: 2048,
+        temperature: 0.5,
+        prompt: Prompt
       });
 
-      if (!response || !response.data || !response.data.choices || response.data.choices.length === 0) {
-        throw new Error('Invalid response received from OpenAI API.');
-      }
+      const generatedText = response.data.choices[0].text;
+      const trimmedText = generatedText.replace(`Question: ${Prompt}`, '');
 
-      const returnMessage = response.data.choices[0].message.content;
-      await interaction.reply(returnMessage);
+      const gptEmbed = new EmbedBuilder()
+        .setColor('Purple')
+        .setTitle(`Question: ${Prompt}`)
+        .setDescription(`Answer: ${trimmedText}`)
+        .addFields(
+          { name: 'Model used:', value: 'text-davinci-003' },
+          { name: 'Main github repository link', value: "[Link to main repo](https://github.com/MRCattos/Sir-Kitlen/tree/main)" },
+          { name: 'dev build', value: "[Link to dev repo](https://github.com/MRCattos/Sir-Kitlen/tree/developer-build)" },
+        )
+
+      await interaction.editReply({ embeds: [gptEmbed] });
+
     } catch (error) {
       console.error('An error occurred:', error);
       let errorMessage = 'An error occurred while processing your request.';
